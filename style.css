@@ -14,9 +14,34 @@ body {
     transition: background 0.1s;
 }
 
+/* Start Overlay */
+#start-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    cursor: pointer;
+}
+
+.pulse { 
+    font-size: 3rem;
+    animation: pulse-green 2s infinite; 
+}
+
+@keyframes pulse-green {
+    0% { text-shadow: 0 0 10px #39ff14; }
+    50% { text-shadow: 0 0 30px #39ff14, 0 0 50px #39ff14; }
+    100% { text-shadow: 0 0 10px #39ff14; }
+}
+
+/* UI Elements */
 #leaderboard {
     position: absolute;
-    top: 20px;
+    top: 60px; /* Shifted down to make room for Event Bar */
     left: 20px;
     border: 2px solid #39ff14;
     padding: 15px;
@@ -25,12 +50,23 @@ body {
     min-width: 200px;
 }
 
-.lb-title { text-decoration: underline; margin-bottom: 5px; font-weight: bold; }
+#event-bar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: #39ff14;
+    color: #000;
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    display: none;
+    z-index: 99;
+    box-shadow: 0 0 20px #39ff14;
+}
 
 #big-a {
     font-size: 15rem;
     margin: 0;
-    cursor: default;
     user-select: none;
     text-shadow: 0 0 30px #39ff14;
     transition: transform 0.05s;
@@ -74,6 +110,18 @@ body {
     color: #39ff14;
     padding: 5px;
     outline: none;
+}
+
+#version-tag {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    font-size: 12px;
+    color: rgba(57, 255, 20, 0.5);
+    display: none;
+    background: rgba(0,0,0,0.8);
+    padding: 5px;
+    border: 1px solid #39ff14;
 }
 
 .wrong-flash { background: #ff0000 !important; }
