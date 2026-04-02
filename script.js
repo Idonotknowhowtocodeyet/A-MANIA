@@ -15,6 +15,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// AUDIO ENGINE
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playASound(freq) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+}
+
 let score = 0;
 let multiplier = 1.0;
 let playerName = prompt("ENTER YOUR EMPIRE NAME:") || "Anon_" + Math.floor(Math.random()*999);
@@ -26,20 +41,25 @@ const topList = document.getElementById('top-list');
 const chatInput = document.getElementById('chat-input');
 const chatDisplay = document.getElementById('chat-display');
 
-// MASHING LOGIC
 window.addEventListener('keydown', (e) => {
     if (document.activeElement.id === 'chat-input') return;
 
     if (e.key.toLowerCase() === 'a') {
         score++;
         multiplier = Math.min(multiplier + 0.05, 20.0);
+        
+        // SOUND: Pitch goes up with multiplier
+        playASound(200 + (multiplier * 20));
+
         scoreElement.innerText = score;
         multiElement.innerText = "x" + multiplier.toFixed(1);
         aElement.style.transform = `scale(${1 + (multiplier * 0.02)})`;
         setTimeout(() => aElement.style.transform = "scale(1)", 50);
         update(ref(db, 'leaderboard/' + playerName), { clicks: increment(1) });
+
     } else if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) {
         multiplier = 1.0;
+        playASound(100); // Low thud for mistake
         multiElement.innerText = "x1.0";
         aElement.innerText = "WRONG";
         document.body.classList.add('wrong-flash');
@@ -50,7 +70,6 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// LEADERBOARD UPDATE
 onValue(ref(db, 'leaderboard'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
@@ -59,7 +78,6 @@ onValue(ref(db, 'leaderboard'), (snapshot) => {
     }
 });
 
-// CHAT SYSTEM
 chatInput.addEventListener('input', (e) => { e.target.value = e.target.value.replace(/[^aA ]/g, ''); });
 chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && chatInput.value.length > 0) {
@@ -70,7 +88,8 @@ chatInput.addEventListener('keydown', (e) => {
 onValue(ref(db, 'chat'), (snapshot) => {
     const messages = snapshot.val();
     if (messages) {
-        chatDisplay.innerHTML = Object.values(messages).slice(-10).map(m => `<div>${m.msg}</div>`).join('');
+        const lastMessages = Object.values(messages).slice(-10);
+        chatDisplay.innerHTML = lastMessages.map(m => `<div>${m.msg}</div>`).join('');
         chatDisplay.scrollTop = chatDisplay.scrollHeight;
     }
 });
