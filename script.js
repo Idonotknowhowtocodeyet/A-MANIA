@@ -15,14 +15,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// AUDIO ENGINE
+// --- SETTINGS ---
+const VERSION = "1.0.4";
+let eventMultiplier = 1;
+let playerName = prompt("ENTER YOUR EMPIRE NAME:") || "Anon_" + Math.floor(Math.random()*999);
+
+// --- AUDIO ENGINE ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playASound(freq) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -30,9 +36,9 @@ function playASound(freq) {
     osc.stop(audioCtx.currentTime + 0.1);
 }
 
+// --- STATE ---
 let score = 0;
 let multiplier = 1.0;
-let playerName = prompt("ENTER YOUR EMPIRE NAME:") || "Anon_" + Math.floor(Math.random()*999);
 
 const aElement = document.getElementById('big-a');
 const scoreElement = document.getElementById('score-val');
@@ -40,26 +46,35 @@ const multiElement = document.getElementById('multi-box');
 const topList = document.getElementById('top-list');
 const chatInput = document.getElementById('chat-input');
 const chatDisplay = document.getElementById('chat-display');
+const versionTag = document.getElementById('version-tag');
+const eventBar = document.getElementById('event-bar');
 
+// --- GAME LOGIC ---
 window.addEventListener('keydown', (e) => {
     if (document.activeElement.id === 'chat-input') return;
 
+    // SHIFT + L Version Check
+    if (e.shiftKey && e.key.toLowerCase() === 'l') {
+        versionTag.style.display = versionTag.style.display === 'block' ? 'none' : 'block';
+        return;
+    }
+
     if (e.key.toLowerCase() === 'a') {
-        score++;
+        const points = 1 * eventMultiplier;
+        score += points;
         multiplier = Math.min(multiplier + 0.05, 20.0);
         
-        // SOUND: Pitch goes up with multiplier
         playASound(200 + (multiplier * 20));
-
+        
         scoreElement.innerText = score;
         multiElement.innerText = "x" + multiplier.toFixed(1);
         aElement.style.transform = `scale(${1 + (multiplier * 0.02)})`;
         setTimeout(() => aElement.style.transform = "scale(1)", 50);
-        update(ref(db, 'leaderboard/' + playerName), { clicks: increment(1) });
-
-    } else if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) {
+        
+        update(ref(db, 'leaderboard/' + playerName), { clicks: increment(points) });
+    } else if (!['Shift', 'Control', 'Alt', 'Meta', 'L', 'l'].includes(e.key)) {
         multiplier = 1.0;
-        playASound(100); // Low thud for mistake
+        playASound(100);
         multiElement.innerText = "x1.0";
         aElement.innerText = "WRONG";
         document.body.classList.add('wrong-flash');
@@ -70,6 +85,7 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+// --- FIREBASE SYNC ---
 onValue(ref(db, 'leaderboard'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
@@ -78,6 +94,19 @@ onValue(ref(db, 'leaderboard'), (snapshot) => {
     }
 });
 
+onValue(ref(db, 'currentEvent'), (snapshot) => {
+    const event = snapshot.val();
+    if (event && event.active) {
+        eventMultiplier = event.multiplier || 2;
+        eventBar.innerText = event.message || "EVENT ACTIVE!";
+        eventBar.style.display = "block";
+    } else {
+        eventMultiplier = 1;
+        eventBar.style.display = "none";
+    }
+});
+
+// --- CHAT SYSTEM ---
 chatInput.addEventListener('input', (e) => { e.target.value = e.target.value.replace(/[^aA ]/g, ''); });
 chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && chatInput.value.length > 0) {
