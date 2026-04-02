@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>A-MANIA</title>
+    <style>
+        body { background: #000; color: #39ff14; font-family: 'Courier New', monospace; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; transition: background 0.2s; }
+        #big-a { font-size: 250px; text-shadow: 0 0 20px #39ff14; user-select: none; transition: transform 0.05s; }
+        #leaderboard { position: absolute; top: 20px; left: 20px; border: 2px solid #39ff14; padding: 15px; background: rgba(0,255,0,0.05); box-shadow: 0 0 10px #39ff14; }
+        .wrong { background: #ff0000 !important; color: #fff !important; }
+        #stats { margin-top: 20px; font-size: 1.5rem; text-transform: uppercase; }
+        .glitch { animation: shake 0.1s infinite; }
+        @keyframes shake { 0% { transform: translate(0px, 0px); } 50% { transform: translate(5px, -5px); } 100% { transform: translate(-5px, 5px); } }
+    </style>
+</head>
+<body>
+    <div id="leaderboard">
+        <strong>TOP A-MASHERS</strong>
+        <div id="top-list">WAITING...</div>
+    </div>
+    <h1 id="big-a">A</h1>
+    <div id="stats">PRESSES: <span id="count">0</span> | MULTI: x<span id="multi">1</span></div>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
